@@ -22,7 +22,7 @@ function loadScript(url, id) {
 function getModules(deps) {
   return deps.map(dep => {
     const curMod = __require_context__.require_modules[dep]
-    if (curMod && curMod.loaded && curMod.dependencies && curMod.callback) {
+    if (curMod && curMod.ready && curMod.dependencies && curMod.callback) {
       return curMod.callback.apply(null, getModules(curMod.dependencies))
     }
   })
@@ -52,19 +52,19 @@ function define(dependencies, callback) {
   function loadModuleCallback() {
     // 如果没有依赖
     if (!dependencies.length) {
-      __require_context__.require_modules[id].loaded = true
+      __require_context__.require_modules[id].ready = true
       __require_context__.require_modules[id].callback.apply(null, [])
       execModuleCallback(id)
       return;
     }
     // 如果有依赖
     const allLoaded = dependencies.every(dep => {
-      return __require_context__.require_modules[dep] && __require_context__.require_modules[dep].loaded
+      return __require_context__.require_modules[dep] && __require_context__.require_modules[dep].ready
     })
     // 如果依赖加载完了
     if (allLoaded) {
       const dependencyModules = getModules(dependencies)
-      __require_context__.require_modules[id].loaded = true
+      __require_context__.require_modules[id].ready = true
       __require_context__.require_modules[id].callback.apply(null, dependencyModules)
       execModuleCallback(id)
       return;
