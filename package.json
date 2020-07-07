@@ -1,0 +1,20 @@
+{
+  "name": "my-require",
+  "version": "1.0.0",
+  "description": "my require",
+  "main": "./example/index.js",
+  "scripts": {
+    "start": "webpack-dev-server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/junqiuzhang/my-require.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/junqiuzhang/my-require/issues"
+  },
+  "homepage": "https://github.com/junqiuzhang/my-require#readme"
+}
