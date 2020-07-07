@@ -63,6 +63,7 @@ function define(dependencies, callback) {
     }
     // 如果有依赖
     const dependencyModules = getModules(dependencies)
+    // 如果依赖加载完了
     if (dependencyModules.length === dependencies.length) {
       __require_context__.require_modules[id].callback.apply(null, dependencyModules)
       execModuleCallback(id)
