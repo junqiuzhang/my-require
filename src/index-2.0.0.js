@@ -1,10 +1,3 @@
-/**
- * 核心是require和define函数
- * 1 递归加载依赖（从上到下）
- * 2 注册监听依赖加载完成的事件
- * 3 依赖加载完成后执行监听函数（从下到上）
- * 注：依赖id为url
- */
 (function (global) {
   const context = {
     mainDir: '',
