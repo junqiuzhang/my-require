@@ -47,7 +47,6 @@
     // 加载模块
     load() {
       console.log(this.src, 'load')
-      debugger
       if (this.status < STATUS.loading) {
         this.status = STATUS.loading;
         loadScript(this.src).then(() => {
@@ -61,7 +60,6 @@
     // 加载依赖模块
     loadDependencies() {
       console.log(this.src, 'loadDependencies')
-      debugger
       const deps = this.getDependencyModules();
       deps.forEach(dep => {
         dep.listeners.push(this);
@@ -70,7 +68,6 @@
     }
     check() {
       console.log(this.src, 'check')
-      debugger
       const deps = this.getDependencyModules();
       if (deps.every(dep => dep.status === STATUS.executed)) {
         this.exec();
@@ -82,7 +79,6 @@
     // 执行模块
     exec() {
       console.log(this.src, 'exec')
-      debugger
       this.status = STATUS.executed;
       const deps = this.getDependencyModules();
       const args = deps.map(dep => dep.exec());
