@@ -1,7 +1,7 @@
-console.log('content.js load');
-define([], function () {
-  console.log('content callback')
+define(['./p1.js', './p2.js'], function (p1, p2) {
+  console.log('content callback', p1, p2)
   return {
-    name: '内容'
+    p1,
+    p2
   }
 })

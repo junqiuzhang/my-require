@@ -14,7 +14,6 @@
   function loadScript(url, id) {
     const headNode = document.getElementsByTagName('head')[0];
     const jsNode = document.createElement('script');
-    jsNode.setAttribute('type', 'text/javascript');
     jsNode.setAttribute('src', url);
     jsNode.setAttribute('data-id', id);
     headNode.appendChild(jsNode);

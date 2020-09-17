@@ -1,15 +1,22 @@
+/**
+ * 抽象Module对象
+ */
 (function (global) {
+  const STATUS = {
+    default: 0,
+    loading: 1,
+    loaded: 2,
+    executed: 3
+  };
   const context = {
     mainDir: '',
     modules: {},
-    moduleCallbacks: {}
   };
-  function loadScript(url, id) {
+  function loadScript(src) {
     const headNode = document.getElementsByTagName('head')[0];
     const jsNode = document.createElement('script');
-    jsNode.setAttribute('type', 'text/javascript');
-    jsNode.setAttribute('src', url);
-    jsNode.setAttribute('data-id', id);
+    jsNode.setAttribute('data-id', src);
+    jsNode.setAttribute('src', src);
     headNode.appendChild(jsNode);
     return new Promise((resolve, reject) => {
       jsNode.onload = e => {
@@ -17,83 +24,90 @@
       };
     });
   }
-  function getModules(deps) {
-    return deps.map(dep => {
-      const curMod = context.modules[dep];
-      if (curMod && curMod.ready && curMod.dependencies && curMod.callback) {
-        return curMod.callback.apply(null, getModules(curMod.dependencies));
+  function getModule(src) {
+    return context.modules[src] || (context.modules[src] = new Module({ src }));
+  }
+  class Module {
+    constructor({ src, dependencies = [], callback = () => {} }) {
+      this.status = STATUS.default;
+      this.src = src;
+      this.dependencies = dependencies;
+      this.callback = callback;
+      this.listeners = [];
+    }
+    setModules({ dependencies, callback }) {
+      this.dependencies = dependencies;
+      this.callback = callback;
+    }
+    getDependencyModules() {
+      return this.dependencies.map(dependency => {
+        return getModule(dependency);
+      })
+    }
+    // 加载模块
+    load() {
+      console.log(this.src, 'load')
+      debugger
+      if (this.status < STATUS.loading) {
+        this.status = STATUS.loading;
+        loadScript(this.src).then(() => {
+          this.status = STATUS.loaded;
+          this.check();
+        });
+      } else {
+        this.check();
       }
-    });
+    }
+    // 加载依赖模块
+    loadDependencies() {
+      console.log(this.src, 'loadDependencies')
+      debugger
+      const deps = this.getDependencyModules();
+      deps.forEach(dep => {
+        dep.listeners.push(this);
+        dep.load();
+      });
+    }
+    check() {
+      console.log(this.src, 'check')
+      debugger
+      const deps = this.getDependencyModules();
+      if (deps.every(dep => dep.status === STATUS.executed)) {
+        this.exec();
+        this.listeners.forEach(mod => {
+          mod.check();
+        });
+      }
+    }
+    // 执行模块
+    exec() {
+      console.log(this.src, 'exec')
+      debugger
+      this.status = STATUS.executed;
+      const deps = this.getDependencyModules();
+      const args = deps.map(dep => dep.exec());
+      return this.callback.apply(null, args);
+    }
   }
   function define(dependencies, callback) {
-    const id = document.currentScript
-      ? document.currentScript.getAttribute('data-id')
-      : 'data-main-id';
-    context.modules[id] = {
-      dependencies,
-      callback
-    };
-    function regisModuleCallback(deps) {
-      deps.forEach(dep => {
-        if (!context.moduleCallbacks[dep]) {
-          context.moduleCallbacks[dep] = {};
-        }
-        context.moduleCallbacks[dep][id] = loadModuleCallback;
-      });
-    }
-    function execModuleCallback(dep) {
-      for (const id in context.moduleCallbacks[dep]) {
-        if (context.moduleCallbacks[dep].hasOwnProperty(id)) {
-          const cb = context.moduleCallbacks[dep][id];
-          cb();
-        }
-      }
-    }
-    function loadModuleCallback() {
-      // 如果没有依赖
-      if (!dependencies.length) {
-        context.modules[id].ready = true;
-        context.modules[id].callback.apply(null, []);
-        execModuleCallback(id);
-        return;
-      }
-      // 如果有依赖
-      const allLoaded = dependencies.every(dep => {
-        return context.modules[dep] && context.modules[dep].ready;
-      });
-      // 如果依赖加载完了
-      if (allLoaded) {
-        const dependencyModules = getModules(dependencies);
-        context.modules[id].ready = true;
-        context.modules[id].callback.apply(null, dependencyModules);
-        execModuleCallback(id);
-        return;
-      }
-      // 如果依赖没有加载完
-      const unloadDependencies = dependencies.filter(dep => {
-        return !context.modules[dep];
-      });
-      unloadDependencies.forEach(dep => {
-        return loadScript(context.mainDir + dep, dep);
-      });
-    }
-    // 注册
-    regisModuleCallback(dependencies);
-    // 执行
-    loadModuleCallback();
+    const src = document.currentScript.getAttribute('src');
+    const mod = getModule(src);
+    mod.setModules({ dependencies, callback });
+    mod.loadDependencies();
   }
   global.define = define;
   global.require = define;
   (function () {
     const scriptNodes = document.getElementsByTagName('script');
+    let mainSrc;
     for (let i = 0; i < scriptNodes.length; i++) {
       const scriptNode = scriptNodes[i];
-      const mainUrl = scriptNode.getAttribute('data-main');
-      if (mainUrl) {
-        context.mainDir = mainUrl.split('/').slice(0, -1).join('/') + '/';
-        loadScript(mainUrl, mainUrl);
+      mainSrc = scriptNode.getAttribute('data-main');
+      if (mainSrc) {
         break;
       }
     }
+    context.mainDir = mainSrc.split('/').slice(0, -1).join('/') + '/';
+    loadScript(mainSrc);
   })();
 })(window);
